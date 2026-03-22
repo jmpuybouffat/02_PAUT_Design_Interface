@@ -1,12 +1,3 @@
-import streamlit as st
-import numpy as np
-import pandas as pd
-import matplotlib.pyplot as plt
-
-# --- IMPORTATION DE VOTRE LIBRAIRIE PROPRIÉTAIRE ---
-# On appelle les fonctions Ferrari et Windows depuis votre dossier Library
-from Library.byte_ndt_physics import ferrari2, discrete_windows
-
 # --- 1. CONFIGURATION ET TRADUCTION ---
 st.set_page_config(page_title="Byte NDT - Design 2D PA", layout="wide")
 lang = st.sidebar.selectbox("Langue / Language", ["Français", "English"])
@@ -46,18 +37,21 @@ def calculate_paut_delays(Mx, My, sx, sy, thetat, phi, theta2, DT0, DF, c1, c2):
     Ex, Ey = np.meshgrid(ex, ey)
     ang1_rad = np.arcsin(c1 * np.sin(np.radians(theta2)) / c2)
     
-    # Calcul des coordonnées cibles et interface
+    # Calcul des coordonnées cibles
     DQ = DT0 * np.tan(ang1_rad) + DF * np.tan(np.radians(theta2))
     tx, ty = DQ * np.cos(np.radians(phi)), DQ * np.sin(np.radians(phi))
+    
+    # Distances et hauteurs
     Db = np.sqrt((tx - Ex * np.cos(np.radians(thetat)))**2 + (ty - Ey)**2)
     De = DT0 + Ex * np.sin(np.radians(thetat))
     
-    # Appel de la fonction Ferrari de la Librairie
+    # Appel de la fonction Ferrari depuis la Library
     xi = np.zeros((My, Mx))
     for i in range(My):
         for j in range(Mx):
             xi[i, j] = ferrari2(cr, DF, De[i, j], Db[i, j])
             
+    # Temps de vol et Retards
     t = 1000 * np.sqrt(xi**2 + De**2) / c1 + 1000 * np.sqrt(DF**2 + (Db - xi)**2) / c2
     td = np.max(t) - t
     return td, Ex, Ey, De, tx, ty, xi
@@ -66,22 +60,25 @@ def calculate_paut_delays(Mx, My, sx, sy, thetat, phi, theta2, DT0, DF, c1, c2):
 st.title(T[lang]["title"])
 st.sidebar.header(T[lang]["params"])
 
+# Géométrie
 st.sidebar.subheader(T[lang]["probe"])
-Mx = st.sidebar.number_input("Mx", 1, 32, 8)
-My = st.sidebar.number_input("My", 1, 32, 8)
+Mx = st.sidebar.number_input("Mx (Elements X)", 1, 32, 8)
+My = st.sidebar.number_input("My (Elements Y)", 1, 32, 8)
 sx = st.sidebar.number_input("Pitch X (mm)", 0.1, 2.0, 0.6)
 sy = st.sidebar.number_input("Pitch Y (mm)", 0.1, 2.0, 0.6)
-thetat = st.sidebar.slider("Inclinaison Sonde thetat (°)", 0, 45, 0)
+thetat = st.sidebar.slider("Angle Sonde/Wedge (°)", 0, 45, 0)
 
+# Cibles (Sectoriel 35-70 et Skew -30-30)
 st.sidebar.subheader(T[lang]["target"])
 theta2 = st.sidebar.slider("Sector θ2 (°)", 35, 70, 55)
 phi = st.sidebar.slider("Skew φ (°)", -30, 30, 0)
-f_depth = st.sidebar.number_input("Focus DF (mm)", 10.0, 200.0, 30.0)
+f_depth = st.sidebar.number_input("Focus Depth DF (mm)", 10.0, 150.0, 30.0)
 
+# Milieux
 st.sidebar.subheader(T[lang]["physics"])
-c1 = st.sidebar.number_input("c1 (m/s)", value=1480)
-c2 = st.sidebar.number_input("c2 (m/s)", value=3240)
-DT0 = st.sidebar.number_input("Hauteur DT0 (mm)", value=10.0)
+c1 = st.sidebar.number_input("C1 (Wedge/Water) m/s", value=1480)
+c2 = st.sidebar.number_input("C2 (Steel Shear) m/s", value=3240)
+DT0 = st.sidebar.number_input("Height DT0 (mm)", value=10.0)
 
 # --- 4. CALCUL ET AFFICHAGE ---
 td, Ex, Ey, De, tx, ty, xi = calculate_paut_delays(Mx, My, sx, sy, thetat, phi, theta2, DT0, f_depth, c1, c2)
@@ -95,10 +92,12 @@ with col1:
         for j in range(Mx):
             x1, y1, z1 = Ex[i,j]*np.cos(np.radians(thetat)), Ey[i,j], De[i,j]
             dist_xy = np.sqrt((tx-x1)**2 + (ty-y1)**2)
+            # Calcul du point d'impact à l'interface Z=0
             x_int = x1 + xi[i,j]*(tx-x1)/dist_xy if dist_xy > 0 else x1
             y_int = y1 + xi[i,j]*(ty-y1)/dist_xy if dist_xy > 0 else y1
-            ax.plot([x1, x_int], [y1, y_int], [z1, 0], color='blue', alpha=0.3)
-            ax.plot([x_int, tx], [y_int, ty], [0, -f_depth], color='red', alpha=0.3)
+            # Rayons Milieu 1 (Bleu) et Milieu 2 (Rouge)
+            ax.plot([x1, x_int], [y1, y_int], [z1, 0], color='blue', alpha=0.2)
+            ax.plot([x_int, tx], [y_int, ty], [0, -f_depth], color='red', alpha=0.2)
     ax.view_init(elev=20, azim=45)
     st.pyplot(fig)
 
@@ -109,8 +108,11 @@ with col2:
     ax_bar.set_ylabel("µs")
     st.pyplot(fig_bar)
 
+# --- 5. MATRICE ET EXPORT ---
 st.subheader(T[lang]["matrix"])
 df_td = pd.DataFrame(td)
 st.dataframe(df_td.style.format("{:.3f}"))
-st.download_button(T[lang]["export_btn"], df_td.to_csv(index=False).encode('utf-8'), "loi_focale.csv", "text/csv")
-st.caption(f"© Byte NDT - {T[lang]['info']}")
+st.download_button(T[lang]["export_btn"], df_td.to_csv(index=False).encode('utf-8'), "byte_ndt_focal_law.csv", "text/csv")
+
+st.caption(f"© 2026 Byte NDT | {T[lang]['info']}")
+
