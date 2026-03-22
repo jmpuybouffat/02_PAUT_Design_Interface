@@ -1,3 +1,8 @@
+import streamlit as st
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+
 # --- 1. CONFIGURATION ET TRADUCTION ---
 st.set_page_config(page_title="Byte NDT - Design 2D PA", layout="wide")
 lang = st.sidebar.selectbox("Langue / Language", ["Français", "English"])
