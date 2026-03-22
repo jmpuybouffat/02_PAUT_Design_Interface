@@ -60,7 +60,7 @@ thetat = st.sidebar.slider("Angle Sonde/Wedge (°)", 0, 60, 0)
 theta2 = st.sidebar.slider("Sector θ2 (°)", 35, 70, 55)
 phi = st.sidebar.slider("Skew φ (°)", -30, 30, 0)
 f_depth = st.sidebar.number_input("Focus Depth DF (mm)", 10.0, 300.0, 30.0)
-c1 = st.sidebar.slider("Vitesse C1 (m/s) - Couplant/Sabot", 900, 3000, 2340, step=20))
+c1 = st.sidebar.slider("Vitesse C1 (m/s) - Couplant/Sabot", 900, 3000, 2340, step=20)
 c2 = st.sidebar.slider("Vitesse C2 (m/s) - Pièce (Shear)", 2000, 4000, 3240, step=20)
 DT0 = st.sidebar.number_input("Height DT0 (mm)", value=30.0)
 
