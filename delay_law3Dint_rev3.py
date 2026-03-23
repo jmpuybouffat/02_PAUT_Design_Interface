@@ -49,7 +49,7 @@ def calculate_paut_delays(Mx, My, sx, sy, thetat, phi, theta2, DT0, DF, c1, c2):
     ex = (np.arange(Mx) - (Mx - 1) / 2) * sx
     ey = (np.arange(My) - (My - 1) / 2) * sy
     Ex, Ey = np.meshgrid(ex, ey)
-    ang1_rad = np.arcsin(c1 * np.sin(np.radians(theta2)) / c2)
+    ang1_rad = np.arcsin(np.clip(c1 * np.sin(np.radians(theta2)) / c2, -1, 1))
     DQ = DT0 * np.tan(ang1_rad) + DF * np.tan(np.radians(theta2))
     tx, ty = DQ * np.cos(np.radians(phi)), DQ * np.sin(np.radians(phi))
     Db = np.sqrt((tx - Ex * np.cos(np.radians(thetat)))**2 + (ty - Ey)**2)
@@ -66,22 +66,16 @@ def calculate_paut_delays(Mx, My, sx, sy, thetat, phi, theta2, DT0, DF, c1, c2):
 st.title(T[lang]["title"])
 st.sidebar.header(T[lang]["params"])
 
-# Sonde
-st.sidebar.subheader(T[lang]["probe"])
 Mx = st.sidebar.number_input("Mx (Elements X)", 1, 32, 8)
 My = st.sidebar.number_input("My (Elements Y)", 1, 32, 8)
 sx = st.sidebar.number_input("Pitch X (mm)", 0.1, 2.0, 0.60)
 sy = st.sidebar.number_input("Pitch Y (mm)", 0.1, 2.0, 0.60)
 thetat = st.sidebar.slider("Angle Sonde/Wedge (°)", 0, 60, 0)
 
-# Cible
-st.sidebar.subheader(T[lang]["target"])
 theta2 = st.sidebar.slider("Sector θ2 (°)", 35, 75, 60)
 phi = st.sidebar.slider("Skew φ (°)", -30, 30, 0)
 f_depth = st.sidebar.number_input("Focus Depth DF (mm)", 10.0, 300.0, 27.5)
 
-# Milieux (Multi-matériaux)
-st.sidebar.subheader(T[lang]["physics"])
 c1 = st.sidebar.slider("Vitesse C1 (m/s) - Sabot", 900, 3000, 2340, step=20)
 c2 = st.sidebar.slider("Vitesse C2 (m/s) - Pièce", 2000, 4000, 3240, step=20)
 DT0 = st.sidebar.number_input("Height DT0 (mm)", value=30.0)
@@ -110,37 +104,26 @@ with col2:
     ax_bar.bar(range(len(td.flatten())), td.flatten(), color='royalblue')
     st.pyplot(fig_bar)
 
-# --- 5. CIBLE LSB 941 (INTRADOS/EXTRADOS) ---
+# --- 5. CIBLE LSB 941 ---
 st.divider()
 c_img, c_txt = st.columns([1, 2])
 with c_img:
-    st.image("Assets/LSB941_root.png", caption="Turbine LSB 941 (L0)")
+    st.image("Assets/LSB941_root.png", caption="Turbine LSB 941")
 with c_txt:
     st.subheader(T[lang]["strat"])
     st.write(T[lang]["depth"])
     st.info(T[lang]["msg"])
 
-# Ajout des deux flancs à -27.5 mm sur le graphique
 z_g1 = -27.5
 y_off = 12
 ax.plot([-50, 50], [y_off, y_off], [z_g1, z_g1], color='gold', linestyle='--', linewidth=3, label="Intrados")
 ax.plot([-50, 50], [-y_off, -y_off], [z_g1, z_g1], color='orange', linestyle='--', linewidth=3, label="Extrados")
-ax.text(0, y_off, z_g1, "  Intrados", color='gold', weight='bold')
-ax.text(0, -y_off, z_g1, "  Extrados", color='orange', weight='bold')
 ax.legend()
 
-# AFFICHAGE FINAL DU GRAPHIQUE 3D
 with col1:
     st.pyplot(fig)
 
 st.subheader(T[lang]["matrix"])
-df_td = pd.DataFrame(td)
-st.dataframe(df_td.style.format("{:.3f}"))
-st.download_button(T[lang]["export_btn"], df_td.to_csv(index=False).encode('utf-8'), "loi_focale.csv", "text/csv")
+st.dataframe(pd.DataFrame(td).style.format("{:.3f}"))
+st.download_button(T[lang]["export_btn"], pd.DataFrame(td).to_csv(index=False).encode('utf-8'), "loi_focale.csv", "text/csv")
 st.caption(f"© 2026 Byte NDT | {T[lang]['info']}")
-
-# --- 6. QR CODE OPTIMISÉ POUR MOBILE ---
-st.sidebar.markdown("---")
-st.sidebar.write("📱 **Scan to Mobile**")
-qr_link = "https://api.qrserver.com"
-st.sidebar.image(qr_link, caption="Byte NDT Digital Twin")
