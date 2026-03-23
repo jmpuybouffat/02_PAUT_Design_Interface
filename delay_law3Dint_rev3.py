@@ -112,4 +112,4 @@ z_gorge = -27.5
 ax.plot([-50, 50], [0, 0], [z_gorge, z_gorge], color='gold', linestyle='--', linewidth=3, label="Gorge n°1")
 ax.text(0, 0, z_gorge, "  Target: -27.5mm", color='gold', weight='bold')
 ax.legend()
-st.pyplot(fig) # On rafraîchit le graphique avec le nouveau repère
+
