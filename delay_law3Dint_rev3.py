@@ -93,3 +93,23 @@ df_td = pd.DataFrame(td)
 st.dataframe(df_td.style.format("{:.3f}"))
 st.download_button(T[lang]["export_btn"], df_td.to_csv(index=False).encode('utf-8'), "loi_focale.csv", "text/csv")
 st.caption(f"© 2026 Byte NDT | {T[lang]['info']}")
+
+# --- 5. VISUALISATION DE LA CIBLE LSB 941 (GORGE N°1) ---
+st.divider()
+col_img, col_txt = st.columns([1, 2])
+
+with col_img:
+    # On va chercher l'image dans le dossier Assets
+    st.image("Assets/LSB941_root.png", caption="Cible : Racine LSB 941 (L0)", use_container_width=True)
+
+with col_txt:
+    st.subheader("🎯 Cible Géométrique : Gorge n°1")
+    st.write(f"Profondeur de référence : **-27.5 mm**")
+    st.info("Le faisceau PAUT est focalisé précisément sur le rayon de raccordement de la première dent pour détecter d'éventuelles fissures de fatigue.")
+
+# Ajout d'un repère visuel sur le graphique 3D (Ligne dorée)
+z_gorge = -27.5
+ax.plot([-50, 50], [0, 0], [z_gorge, z_gorge], color='gold', linestyle='--', linewidth=3, label="Gorge n°1")
+ax.text(0, 0, z_gorge, "  Target: -27.5mm", color='gold', weight='bold')
+ax.legend()
+st.pyplot(fig) # On rafraîchit le graphique avec le nouveau repère
