@@ -137,3 +137,8 @@ st.subheader(T[lang]["matrix"])
 st.dataframe(pd.DataFrame(td).style.format("{:.3f}"))
 st.download_button(T[lang]["export_btn"], pd.DataFrame(td).to_csv(index=False).encode('utf-8'), "loi_focale.csv", "text/csv")
 st.caption(f"© 2026 Byte NDT | {T[lang]['info']}")
+
+# Affichage du QR Code en bas de page
+st.sidebar.markdown("---")
+st.sidebar.write("📱 **Scan to Mobile**")
+st.sidebar.image("https://api.qrserver.com")
