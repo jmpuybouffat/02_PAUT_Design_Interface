@@ -86,7 +86,7 @@ with col2:
     st.subheader(T[lang]["viz_delay"])
     fig_bar, ax_bar = plt.subplots()
     ax_bar.bar(range(len(td.flatten())), td.flatten(), color='royalblue')
-    st.pyplot(fig_bar)
+   
 
 st.subheader(T[lang]["matrix"])
 df_td = pd.DataFrame(td)
