@@ -94,22 +94,44 @@ st.dataframe(df_td.style.format("{:.3f}"))
 st.download_button(T[lang]["export_btn"], df_td.to_csv(index=False).encode('utf-8'), "loi_focale.csv", "text/csv")
 st.caption(f"© 2026 Byte NDT | {T[lang]['info']}")
 
-# --- 5. VISUALISATION DE LA CIBLE LSB 941 (GORGE N°1) ---
+# --- 5. VISUALISATION DES CIBLES LSB 941 (GORGE N°1 & N°2) ---
 st.divider()
 col_img, col_txt = st.columns([1, 2])
 
 with col_img:
-    # On va chercher l'image dans le dossier Assets
     st.image("Assets/LSB941_root.png", caption="Cible : Racine LSB 941 (L0)", use_container_width=True)
 
 with col_txt:
-    st.subheader("🎯 Cible Géométrique : Gorge n°1")
-    st.write(f"Profondeur de référence : **-27.5 mm**")
-    st.info("Le faisceau PAUT est focalisé précisément sur le rayon de raccordement de la première dent pour détecter d'éventuelles fissures de fatigue.")
+    # Gestion de la traduction dynamique
+    title = "🎯 Cibles Géométriques" if lang == "Français" else "🎯 Geometric Targets"
+    st.subheader(title)
+    
+    gorge_text = {
+        "Français": "Gorge n°1 : **-27.5 mm** | Gorge n°2 : **-38.0 mm**",
+        "English": "Groove #1: **-27.5 mm** | Groove #2: **-38.0 mm**"
+    }
+    st.write(gorge_text[lang])
+    
+    info_msg = {
+        "Français": "Le faisceau PAUT est focalisé sur les rayons de raccordement des deux premières dents pour détecter d'éventuelles fissures de fatigue.",
+        "English": "The PAUT beam is focused on the fillet radii of the first two teeth to detect potential fatigue cracks."
+    }
+    st.info(info_msg[lang])
 
-# Ajout d'un repère visuel sur le graphique 3D (Ligne dorée)
-z_gorge = -27.5
-ax.plot([-50, 50], [0, 0], [z_gorge, z_gorge], color='gold', linestyle='--', linewidth=3, label="Gorge n°1")
-ax.text(0, 0, z_gorge, "  Target: -27.5mm", color='gold', weight='bold')
+# --- AJOUT DES REPÈRES VISUELS (LIGNES DORÉES) ---
+# Gorge n°1 (-27.5 mm)
+z1 = -27.5
+ax.plot([-50, 50], [0, 0], [z1, z1], color='gold', linestyle='--', linewidth=3, label="Gorge n°1")
+ax.text(0, 5, z1, f" #1: {z1}mm", color='gold', weight='bold')
+
+# Gorge n°2 (Estimation à -38.0 mm - à ajuster selon vos plans)
+z2 = -38.0 
+ax.plot([-50, 50], [0, 0], [z2, z2], color='orange', linestyle='--', linewidth=3, label="Gorge n°2")
+ax.text(0, 5, z2, f" #2: {z2}mm", color='orange', weight='bold')
+
 ax.legend()
+
+# AFFICHAGE FINAL DU GRAPHIQUE 3D COMPLET
+st.pyplot(fig)
+
 
