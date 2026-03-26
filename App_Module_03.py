@@ -4,73 +4,93 @@ import matplotlib.pyplot as plt
 import pandas as pd
 from Library.byte_ndt_physics import calculate_beam_field, apply_db_mask
 
-st.set_page_config(page_title="Byte NDT - Guidage Mécanique LSB 941", layout="wide")
+# --- CONFIGURATION DE LA PAGE ---
+st.set_page_config(page_title="Byte NDT - Conception Mécanique", layout="wide")
 
 st.title("⚙️ Conception d'Outil de Scan - Turbine LSB 941")
+st.markdown("---")
 
-# --- SIDEBAR : CONFIGURATION MONOCRISTAL ---
-st.sidebar.header("🛠️ Paramètres du Test (Maquette)")
-L1 = st.sidebar.slider("Nombre d'éléments (1 pour monocristal)", 1, 12, 1)
-probe_size = st.sidebar.slider("Diamètre du cristal (mm)", 2.0, 20.0, 6.0)
-freq = st.sidebar.slider("Fréquence (MHz)", 1.0, 10.0, 5.0)
+# --- PARAMÈTRES DANS LA BARRE LATÉRALE ---
+st.sidebar.header("🛠️ Configuration du Test")
+
+# Réglages pour votre monocristal 6mm 5MHz
+L1 = st.sidebar.slider("Nombre d'éléments (1 = Monocristal)", 1, 12, 1)
+probe_size = st.sidebar.number_input("Diamètre du cristal (mm)", value=6.0)
+freq = st.sidebar.number_input("Fréquence (MHz)", value=5.0)
 theta2 = st.sidebar.slider("Angle de réfraction souhaité (°)", 35, 70, 45)
 Dt0 = st.sidebar.slider("Hauteur du sabot (Wedge Height) [mm]", 10.0, 40.0, 30.0)
 
-# --- CALCUL DE LA GÉOMÉTRIE DE GUIDAGE ---
-target_z = 27.5  # Profondeur de la gorge n°1
-# Calcul de l'offset X nécessaire pour que le tir à 45° frappe à 27.5mm
-# Offset = Z * tan(theta)
-offset_x = target_z * np.tan(np.radians(theta2))
+# Profondeur de la Gorge n°1 (Z négatif pour le milieu de la pièce)
+target_z = -27.15
+
+# Calcul de l'Offset X pour Fusion 360 (Offset = |Z| * tan(theta))
+offset_x = abs(target_z) * np.tan(np.radians(theta2))
 
 st.sidebar.markdown("---")
-st.sidebar.write(f"📏 **Offset de scan calculé : {offset_x:.2f} mm**")
-st.sidebar.info("C'est la distance entre le centre de la sonde et la dent projetée verticalement.")
+st.sidebar.write(f"🎯 **Cible : {target_z} mm**")
+st.sidebar.write(f"📏 **Offset de guidage : {offset_x:.2f} mm**")
+st.sidebar.info("L'offset est la distance horizontale entre le centre de la sonde et la dent.")
 
-# --- ZONE D'INTÉRÊT (ROI) ---
+# --- ZONE DE CALCUL (ROI) ---
+# On définit une grille qui va de la surface (0) à l'intérieur de la pièce (-50mm)
 ROI = {
-    'xs': np.linspace(-30, 30, 150),
-    'zs': np.linspace(10, 50, 150)
+    'xs': np.linspace(-40, 40, 160),
+    'zs': np.linspace(0, 50, 100) # Le moteur utilise des distances positives en interne
 }
 
-# Matériau (Maquette PLA/ABS ~2300 m/s)
+# Matériau Maquette (Vitesse Plastique ~2300 m/s)
 mat = [1.0, 1480, 1.2, 2300, 2300, 'p']
 
-if st.button("🚀 Simuler le faisceau à 45°"):
-    vmag = calculate_beam_field(L1, 1, probe_size, probe_size, freq, mat, Dt0, theta2, 0, target_z, ROI)
-    heatmap = apply_db_mask(vmag)
-    
-    # --- AFFICHAGE GRAPHIQUE ---
-    fig, ax = plt.subplots(figsize=(10, 7))
-    # Inversion pour avoir Z vers le bas
-    im = ax.imshow(heatmap, extent=[-30, 30, 50, 10], cmap='jet', aspect='auto')
-    
-    # Ligne horizontale de la Gorge n°1
-    ax.axhline(y=target_z, color='gold', linestyle='--', linewidth=2, label="Gorge n°1 (-27.5mm)")
-    
-    # Marqueur du point d'impact idéal
-    ax.scatter([0], [target_z], color='white', s=100, marker='X', label="Cible")
+# --- BOUTON DE SIMULATION ---
+if st.button("🚀 Lancer la Simulation (Cible -27.15 mm)"):
+    with st.spinner("Calcul du faisceau en cours..."):
+        # Appel au moteur Sommerfeld
+        vmag = calculate_beam_field(L1, 1, probe_size, probe_size, freq, mat, Dt0, theta2, 0, abs(target_z), ROI)
+        heatmap = apply_db_mask(vmag)
+        
+        # --- AFFICHAGE GRAPHIQUE ---
+        fig, ax = plt.subplots(figsize=(10, 6))
+        
+        # On affiche avec Z négatif pour la métrologie
+        # Extent : [Xmin, Xmax, Zmax(fond), Zmin(surface)]
+        im = ax.imshow(heatmap, extent=[-40, 40, -50, 0], cmap='jet', aspect='auto')
+        
+        # Ligne de la Gorge n°1 à -27.15 mm
+        ax.axhline(y=target_z, color='gold', linestyle='--', linewidth=2, label=f"Gorge n°1 ({target_z}mm)")
+        
+        # Point d'impact théorique
+        ax.scatter([0], [target_z], color='white', s=100, marker='X', label="Impact Cible")
 
-    ax.set_xlabel("X (mm)")
-    ax.set_ylabel("Profondeur Z (mm)")
-    ax.set_title(f"Faisceau Monocristal 6mm à {theta2}°")
-    ax.legend()
-    plt.colorbar(im, label="Échelle dB")
-    st.pyplot(fig)
+        ax.set_xlabel("Position Latérale X (mm)")
+        ax.set_ylabel("Profondeur Z (mm)")
+        ax.set_title(f"Faisceau Monocristal {probe_size}mm à {theta2}°")
+        ax.legend()
+        plt.colorbar(im, label="Intensité Relative (dB)")
+        st.pyplot(fig)
 
-    # --- GÉNÉRATION DE LA COURBE POUR FUSION 360 ---
-    st.subheader("📈 Coordonnées de la rampe de guidage (Export Fusion 360)")
-    
-    # On génère une courbe de mouvement sur 40mm de large
-    x_scan = np.linspace(-20, 20, 20)
-    # Pour Fusion, on donne les positions réelles de la sonde
-    df_coords = pd.DataFrame({
-        'Position_Moteur_X': x_scan,
-        'Position_Sonde_Z': [Dt0] * len(x_scan),
-        'Cible_Gorge_X': x_scan + offset_x
-    })
-    
-    st.write("Utilisez ces points pour dessiner la rainure dans votre esquisse Fusion 360.")
-    st.dataframe(df_coords.style.format("{:.2f}"))
-    
-    csv = df_coords.to_csv(index=False).encode('utf-8')
-    st.download_button("📥 Télécharger points pour profil de guidage", csv, "tool_path_LSB941.csv", "text/csv")
+        # --- GÉNÉRATION DES COORDONNÉES POUR FUSION 360 ---
+        st.divider()
+        st.subheader("📈 Export de Courbe pour Fusion 360 & Micromoteur")
+        
+        # Génération d'une trajectoire sur 50 mm de course de l'aube
+        x_aube = np.linspace(-25, 25, 25)
+        
+        df_coords = pd.DataFrame({
+            'Course_Aube_X': x_aube,
+            'Position_Sonde_X': x_aube - offset_x,
+            'Hauteur_Appui_Z': [0.0] * len(x_aube), # Surface de contact
+            'Profondeur_Dent_Z': [target_z] * len(x_aube)
+        })
+        
+        st.write("Tableau de positionnement (X sonde) pour maintenir le tir à 45° sur la dent :")
+        st.dataframe(df_coords.style.format("{:.2f}"))
+        
+        # Export CSV
+        csv = df_coords.to_csv(index=False).encode('utf-8')
+        st.download_button(
+            label="📥 Télécharger les points pour Fusion 360",
+            data=csv,
+            file_name="trajectoire_scan_LSB941.csv",
+            mime="text/csv",
+        )
+        st.success("Données prêtes pour importation Spline dans Fusion 360.")
