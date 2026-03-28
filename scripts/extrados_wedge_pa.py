@@ -15,18 +15,9 @@ def extrados(x):
 x_ext = np.linspace(-35, 115, 100)
 y_ext = extrados(x_ext)
 
-# Indications extrados
-def indication_extrados(x):
-    return -0.002120007284*x**2 + 0.01039951273*x + 275.5911374
-
-x_ind = np.linspace(-34, 113, 100)
-z_ind = indication_extrados(x_ind)
-y_ind = np.zeros_like(x_ind)  # y = 0
-
 fig = plt.figure()
 ax = fig.add_subplot(111, projection='3d')
 ax.plot(x_ext, np.zeros_like(x_ext), y_ext, label='Extrados')
 ax.plot(x_pa, y_pa, z_pa, label='PA', color='blue')
-ax.plot(x_ind, y_ind, z_ind, label='Indications Extrados', color='red')
 ax.view_init(elev=20, azim=-60)
 plt.show()
