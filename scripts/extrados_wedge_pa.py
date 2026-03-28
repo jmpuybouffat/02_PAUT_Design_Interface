@@ -2,23 +2,14 @@ import numpy as np
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 
-# Surface extrados (mm)
-def extrados(x):
-    return 0.001808914648*x**2 - 0.1314763917*x + 17.33694558
+t = np.linspace(-30, 110, 1000)
 
-# PA + wedge 55°
-x = np.linspace(-35, 115, 100)
-y = extrados(x)
+x = t
+y = -0.003609426882*t**2 + 0.3901521821*t + 19.70318543
+z = -0.005488853532*t**2 + 0.4063539903*t + 322.5637160
 
 fig = plt.figure()
 ax = fig.add_subplot(111, projection='3d')
-ax.plot(x, np.zeros_like(x), y, label='Extrados')
+ax.plot(x, y, z, label='Courbe 3D', color='blue')
 ax.view_init(elev=20, azim=-60)
 plt.show()
-
-3. Add + commit + push :
-
-bash
-git add scripts/extrados_wedge_pa.py
-git commit -m "Add extrados wedge PA code"
-git push origin main
