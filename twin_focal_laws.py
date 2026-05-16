@@ -230,3 +230,4 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+export_wide_delay_table(laws_A)
