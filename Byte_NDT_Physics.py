@@ -24,6 +24,7 @@ ax.plot_surface(X, Y, Z, cmap='viridis')
 ax.set_title('Faisceau 3D (sectorial + skew)')
 st.pyplot(fig)
 plt.savefig('faisceau_3d.png')
+
 # ============================================================
 # BYTE NDT TWIN - Validated geometry focal laws
 # ============================================================
