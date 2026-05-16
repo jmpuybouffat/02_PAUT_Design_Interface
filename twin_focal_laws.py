@@ -12,7 +12,8 @@ import pandas as pd
 
 BASE_DIR = Path(__file__).resolve().parent
 DATA_DIR = BASE_DIR / "data" / "validated_geometry"
-OUT_DIR = BASE_DIR / "data" / "twin_outputs"
+
+OUT_DIR = Path(r"D:\PROJET_BYTENDT_AI\01_SCRIPTS\09_RESULTS_REPORTS\LSB941_TWIN_V1\02_FOCAL_LAWS")
 OUT_DIR.mkdir(parents=True, exist_ok=True)
 
 
